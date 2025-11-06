@@ -172,152 +172,154 @@ class _EventListPageState extends State<EventListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'イベント一覧',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _buildDateField(context, isStartDate: true),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text('〜'),
-                      ),
-                      _buildDateField(context, isStartDate: false),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildAreaDropdown(),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _applyFilters,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+      body: SelectionArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'イベント一覧',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        _buildDateField(context, isStartDate: true),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Text('〜'),
+                        ),
+                        _buildDateField(context, isStartDate: false),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildAreaDropdown(),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _applyFilters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text(
+                          'この条件で絞り込む',
+                          style: TextStyle(fontSize: 16),
                         ),
                       ),
-                      child: const Text(
-                        'この条件で絞り込む',
-                        style: TextStyle(fontSize: 16),
-                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Divider(),
-                ],
+                    const SizedBox(height: 8),
+                    const Divider(),
+                  ],
+                ),
               ),
             ),
-          ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('events')
-                .orderBy('startDate', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('イベント情報がありません。')),
-                );
-              }
-
-              final allDocs = snapshot.data!.docs;
-              final filteredDocs = allDocs.where((doc) {
-                final item = ContentItem.fromFirestore(doc);
-                final matchesArea =
-                    _appliedArea == null || item.area == _appliedArea;
-                final eventStartDate = item.startDate?.toDate();
-                final eventEndDate = item.endDate?.toDate();
-                bool matchesDate = true;
-                if (eventStartDate != null && eventEndDate != null) {
-                  if (_appliedStartDate != null &&
-                      eventEndDate.isBefore(_appliedStartDate!)) {
-                    matchesDate = false;
-                  }
-                  if (_appliedEndDate != null &&
-                      eventStartDate.isAfter(_appliedEndDate!)) {
-                    matchesDate = false;
-                  }
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('events')
+                  .orderBy('startDate', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 }
-                return matchesArea && matchesDate;
-              }).toList();
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('イベント情報がありません。')),
+                  );
+                }
 
-              if (filteredDocs.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('条件に合うイベントが見つかりませんでした。')),
+                final allDocs = snapshot.data!.docs;
+                final filteredDocs = allDocs.where((doc) {
+                  final item = ContentItem.fromFirestore(doc);
+                  final matchesArea =
+                      _appliedArea == null || item.area == _appliedArea;
+                  final eventStartDate = item.startDate?.toDate();
+                  final eventEndDate = item.endDate?.toDate();
+                  bool matchesDate = true;
+                  if (eventStartDate != null && eventEndDate != null) {
+                    if (_appliedStartDate != null &&
+                        eventEndDate.isBefore(_appliedStartDate!)) {
+                      matchesDate = false;
+                    }
+                    if (_appliedEndDate != null &&
+                        eventStartDate.isAfter(_appliedEndDate!)) {
+                      matchesDate = false;
+                    }
+                  }
+                  return matchesArea && matchesDate;
+                }).toList();
+
+                if (filteredDocs.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('条件に合うイベントが見つかりませんでした。')),
+                  );
+                }
+
+                // ★★★ ページネーションのための計算 ★★★
+                final totalItems = filteredDocs.length;
+                final totalPages = (totalItems / _itemsPerPage).ceil();
+                final startIndex = (_currentPage - 1) * _itemsPerPage;
+                final endIndex = (startIndex + _itemsPerPage).clamp(
+                  0,
+                  totalItems,
                 );
-              }
+                final displayedDocs = filteredDocs.sublist(startIndex, endIndex);
 
-              // ★★★ ページネーションのための計算 ★★★
-              final totalItems = filteredDocs.length;
-              final totalPages = (totalItems / _itemsPerPage).ceil();
-              final startIndex = (_currentPage - 1) * _itemsPerPage;
-              final endIndex = (startIndex + _itemsPerPage).clamp(
-                0,
-                totalItems,
-              );
-              final displayedDocs = filteredDocs.sublist(startIndex, endIndex);
-
-              return SliverMainAxisGroup(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                      child: Text(
-                        '${filteredDocs.length}件 / ${allDocs.length}件中',
-                        style: Theme.of(context).textTheme.bodySmall,
+                return SliverMainAxisGroup(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                        child: Text(
+                          '${filteredDocs.length}件 / ${allDocs.length}件中',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ),
                     ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1,
-                          ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final item = ContentItem.fromFirestore(
-                          displayedDocs[index],
-                        );
-                        return _buildEventCard(item);
-                      }, childCount: displayedDocs.length),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1,
+                            ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = ContentItem.fromFirestore(
+                            displayedDocs[index],
+                          );
+                          return _buildEventCard(item);
+                        }, childCount: displayedDocs.length),
+                      ),
                     ),
-                  ),
-                  // ★★★ ページネーションコントロールを表示 ★★★
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                      child: _buildPaginationControls(totalPages),
+                    // ★★★ ページネーションコントロールを表示 ★★★
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                        child: _buildPaginationControls(totalPages),
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ), // ★★★ 変更点: SelectionAreaの閉じタグ ★★★
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 3),
     );
   }

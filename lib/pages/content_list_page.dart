@@ -244,131 +244,133 @@ class ContentListPageState extends State<ContentListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(),
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'キーワードで検索',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                        borderSide: BorderSide.none,
+      body: SelectionArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'キーワードで検索',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30.0),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[200],
                       ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFilterSection('ジャンル', _genreFilters),
-                  _buildFilterSection('エリア', _areaFilters),
-                  const Divider(),
-                ],
+                    const SizedBox(height: 16),
+                    _buildFilterSection('ジャンル', _genreFilters),
+                    _buildFilterSection('エリア', _areaFilters),
+                    const Divider(),
+                  ],
+                ),
               ),
             ),
-          ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection(widget.collectionName)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection(widget.collectionName)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return SliverFillRemaining(
+                    child: Center(child: Text('エラー: ${snapshot.error}')),
+                  );
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('データが見つかりませんでした。')),
+                  );
+                }
+
+                final activeGenreFilters = _genreFilters.entries
+                    .where((e) => e.value)
+                    .map((e) => e.key)
+                    .toList();
+                final activeAreaFilters = _areaFilters.entries
+                    .where((e) => e.value)
+                    .map((e) => e.key)
+                    .toList();
+
+                var filteredDocs = snapshot.data!.docs.where((doc) {
+                  final item = ContentItem.fromFirestore(doc);
+                  final matchesText =
+                      _searchText.isEmpty ||
+                      item.title.toLowerCase().contains(
+                        _searchText.toLowerCase(),
+                      );
+                  final matchesGenre =
+                      activeGenreFilters.isEmpty ||
+                      activeGenreFilters.contains(item.genre);
+                  final matchesArea =
+                      activeAreaFilters.isEmpty ||
+                      activeAreaFilters.contains(item.area);
+
+                  return matchesText && matchesGenre && matchesArea;
+                }).toList();
+
+                if (filteredDocs.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('条件に合うスポットが見つかりませんでした。')),
+                  );
+                }
+
+                // ★★★ ページネーションのための計算 ★★★
+                final totalItems = filteredDocs.length;
+                final totalPages = (totalItems / _itemsPerPage).ceil();
+                final startIndex = (_currentPage - 1) * _itemsPerPage;
+                final endIndex = (startIndex + _itemsPerPage).clamp(
+                  0,
+                  totalItems,
                 );
-              }
-              if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  child: Center(child: Text('エラー: ${snapshot.error}')),
-                );
-              }
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('データが見つかりませんでした。')),
-                );
-              }
+                final displayedDocs = filteredDocs.sublist(startIndex, endIndex);
 
-              final activeGenreFilters = _genreFilters.entries
-                  .where((e) => e.value)
-                  .map((e) => e.key)
-                  .toList();
-              final activeAreaFilters = _areaFilters.entries
-                  .where((e) => e.value)
-                  .map((e) => e.key)
-                  .toList();
-
-              var filteredDocs = snapshot.data!.docs.where((doc) {
-                final item = ContentItem.fromFirestore(doc);
-                final matchesText =
-                    _searchText.isEmpty ||
-                    item.title.toLowerCase().contains(
-                      _searchText.toLowerCase(),
-                    );
-                final matchesGenre =
-                    activeGenreFilters.isEmpty ||
-                    activeGenreFilters.contains(item.genre);
-                final matchesArea =
-                    activeAreaFilters.isEmpty ||
-                    activeAreaFilters.contains(item.area);
-
-                return matchesText && matchesGenre && matchesArea;
-              }).toList();
-
-              if (filteredDocs.isEmpty) {
-                return const SliverFillRemaining(
-                  child: Center(child: Text('条件に合うスポットが見つかりませんでした。')),
-                );
-              }
-
-              // ★★★ ページネーションのための計算 ★★★
-              final totalItems = filteredDocs.length;
-              final totalPages = (totalItems / _itemsPerPage).ceil();
-              final startIndex = (_currentPage - 1) * _itemsPerPage;
-              final endIndex = (startIndex + _itemsPerPage).clamp(
-                0,
-                totalItems,
-              );
-              final displayedDocs = filteredDocs.sublist(startIndex, endIndex);
-
-              return SliverMainAxisGroup(
-                slivers: [
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1.2,
-                          ),
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final item = ContentItem.fromFirestore(
-                          displayedDocs[index],
-                        );
-                        return _buildImageCard(context, item);
-                      }, childCount: displayedDocs.length),
+                return SliverMainAxisGroup(
+                  slivers: [
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.2,
+                            ),
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = ContentItem.fromFirestore(
+                            displayedDocs[index],
+                          );
+                          return _buildImageCard(context, item);
+                        }, childCount: displayedDocs.length),
+                      ),
                     ),
-                  ),
-                  // ★★★ ページネーションコントロールを表示 ★★★
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                      child: _buildPaginationControls(totalPages),
+                    // ★★★ ページネーションコントロールを表示 ★★★
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                        child: _buildPaginationControls(totalPages),
+                      ),
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ), 
       bottomNavigationBar: AppBottomNavigation(currentIndex: _selectedIndex),
     );
   }
