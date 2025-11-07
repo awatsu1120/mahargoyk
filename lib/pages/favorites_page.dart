@@ -52,35 +52,36 @@ class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(),
-      body: _user == null
-          ? _buildLoginPrompt()
-          : DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  const TabBar(
-                    labelColor: Colors.black87,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.blueAccent,
-                    tabs: [
-                      Tab(icon: Icon(Icons.place), text: 'スポット'),
-                      Tab(icon: Icon(Icons.directions_walk), text: 'モデルコース'),
-                      Tab(icon: Icon(Icons.event), text: 'イベント'),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      children: [
-                        _buildFavoritesList('spots'),
-                        _buildFavoritesList('courses'),
-                        _buildFavoritesList('events'),
+body: SelectionArea(
+        child: _user == null
+            ? _buildLoginPrompt()
+            : DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    const TabBar(
+                      labelColor: Colors.black87,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blueAccent,
+                      tabs: [
+                        Tab(icon: Icon(Icons.place), text: 'スポット'),
+                        Tab(icon: Icon(Icons.directions_walk), text: 'モデルコース'),
+                        Tab(icon: Icon(Icons.event), text: 'イベント'),
                       ],
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: TabBarView(
+                        children: [
+                          _buildFavoritesList('spots'),
+                          _buildFavoritesList('courses'),
+                          _buildFavoritesList('events'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-      // currentIndexに無効な値を渡してクラッシュするのを防ぎ、選択色もグレーにする
+      ),      // currentIndexに無効な値を渡してクラッシュするのを防ぎ、選択色もグレーにする
       bottomNavigationBar: const AppBottomNavigation(currentIndex: -1),
     );
   }

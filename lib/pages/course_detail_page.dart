@@ -159,120 +159,122 @@ class CourseDetailPageState extends State<CourseDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(),
-      body: FutureBuilder<CourseItem>(
-        future: _courseFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: Text('コースが見つかりません。'));
-          }
+      body: SelectionArea(
+        child: FutureBuilder<CourseItem>(
+          future: _courseFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text('エラーが発生しました: ${snapshot.error}'));
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: Text('コースが見つかりません。'));
+            }
 
-          final course = snapshot.data!;
+            final course = snapshot.data!;
 
-          return Center(
-            child: SizedBox(
-              width: 720,
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Image.network(
-                      course.imageUrl,
-                      fit: BoxFit.cover,
-                      height: 250,
-                      width: double.infinity,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  course.title,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              if (_user != null)
-                                StreamBuilder<bool>(
-                                  stream: _firestoreService.isFavorite(
-                                    'courses',
-                                    course.id,
-                                  ),
-                                  builder: (context, snapshot) {
-                                    final isFavorited = snapshot.data ?? false;
-                                    return IconButton(
-                                      icon: Icon(
-                                        isFavorited
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        color: isFavorited
-                                            ? Colors.red
-                                            : Colors.grey,
-                                        size: 30,
-                                      ),
-                                      onPressed: () {
-                                        if (isFavorited) {
-                                          _firestoreService.removeFavorite(
-                                            'courses',
-                                            course.id,
-                                          );
-                                        } else {
-                                          _firestoreService.addFavorite(
-                                            'courses',
-                                            course.id,
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            course.description,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const Divider(height: 32),
-                        ],
+            return Center(
+              child: SizedBox(
+                width: 720,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Image.network(
+                        course.imageUrl,
+                        fit: BoxFit.cover,
+                        height: 250,
+                        width: double.infinity,
                       ),
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: course.spots.length,
-                      itemBuilder: (context, index) {
-                        final spot = course.spots[index];
-                        return Column(
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (index > 0) _buildTransportLink(spot.access),
-                            _buildSpotCard(context, spot),
-                            if (index == course.spots.length - 1)
-                              const SizedBox(height: 32),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    course.title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                if (_user != null)
+                                  StreamBuilder<bool>(
+                                    stream: _firestoreService.isFavorite(
+                                      'courses',
+                                      course.id,
+                                    ),
+                                    builder: (context, snapshot) {
+                                      final isFavorited = snapshot.data ?? false;
+                                      return IconButton(
+                                        icon: Icon(
+                                          isFavorited
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: isFavorited
+                                              ? Colors.red
+                                              : Colors.grey,
+                                          size: 30,
+                                        ),
+                                        onPressed: () {
+                                          if (isFavorited) {
+                                            _firestoreService.removeFavorite(
+                                              'courses',
+                                              course.id,
+                                            );
+                                          } else {
+                                            _firestoreService.addFavorite(
+                                              'courses',
+                                              course.id,
+                                            );
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              course.description,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const Divider(height: 32),
                           ],
-                        );
-                      },
-                    ),
-                  ],
+                        ),
+                      ),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: course.spots.length,
+                        itemBuilder: (context, index) {
+                          final spot = course.spots[index];
+                          return Column(
+                            children: [
+                              if (index > 0) _buildTransportLink(spot.access),
+                              _buildSpotCard(context, spot),
+                              if (index == course.spots.length - 1)
+                                const SizedBox(height: 32),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        ),
+      ), 
       bottomNavigationBar: const AppBottomNavigation(currentIndex: 2),
     );
   }

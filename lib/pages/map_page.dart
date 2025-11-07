@@ -541,9 +541,9 @@ class MapPageState extends State<MapPage> {
 
     return Scaffold(
       appBar: const AppHeader(),
-      body: Stack(
-        children: [
-          //Map 
+body: SelectionArea(
+        child: Stack(
+          children: [          //Map 
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -824,6 +824,7 @@ class MapPageState extends State<MapPage> {
           ),
         ],
       ),
+    ),
       bottomNavigationBar: AppBottomNavigation(currentIndex: _selectedIndex),
     );
   }

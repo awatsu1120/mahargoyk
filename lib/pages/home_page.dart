@@ -246,33 +246,35 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  Widget build(BuildContext context) {
+Widget build(BuildContext context) {
     return Scaffold(
       appBar: const AppHeader(),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              TextField(
-                decoration: InputDecoration(
-                  hintText: '行き先やキーワードで検索',
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                    borderSide: BorderSide.none,
+      body: SelectionArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: '行き先やキーワードで検索',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[200],
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[200],
                 ),
-              ),
-              const SizedBox(height: 24),
-              _buildContentSection('スポット', 'spots'),
-              _buildContentSection('イベント', 'events'),
-              // ★★★ モデルコースセクションの呼び出しを変更 ★★★
-              _buildCoursesSection(),
-            ],
+                const SizedBox(height: 24),
+                _buildContentSection('スポット', 'spots'),
+                _buildContentSection('イベント', 'events'),
+                // ★★★ モデルコースセクションの呼び出しを変更 ★★★
+                _buildCoursesSection(),
+              ],
+            ),
           ),
         ),
       ),
